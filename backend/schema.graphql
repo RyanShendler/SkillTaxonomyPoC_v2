@@ -1,0 +1,35 @@
+type Taxonomy {
+    children: [SkillCategory!]! @relationship(type: "SUB_CLASS_OF", direction: IN)
+}
+
+type SkillCategory {
+    name: String
+    childSkills: [Skill!]! @relationship(type: "SUB_CLASS_OF", direction: IN)
+    childCategories: [SkillCategory!]!
+      @relationship(type: "SUB_CLASS_OF", direction: IN)
+    parentCategories: [SkillCategory!]!
+      @relationship(type: "SUB_CLASS_OF", direction: OUT)
+}
+
+type Skill {
+    name: String
+    inCategory: [SkillCategory!]!
+      @relationship(type: "SUB_CLASS_OF", direction: OUT)
+}
+
+type SkillLike @exclude {
+    name: String!
+    id: String!
+    parent: String
+}
+
+type Query {
+    getTaxonomy: [SkillLike!]! 
+        @cypher(
+            statement: """
+            MATCH (:Taxonomy)<-[:SUB_CLASS_OF*0..]-(k)
+            OPTIONAL MATCH (k)-[:SUB_CLASS_OF]->(p)
+            RETURN {name: k.name, id: k.id, parent: p.id}
+            """
+        )
+}

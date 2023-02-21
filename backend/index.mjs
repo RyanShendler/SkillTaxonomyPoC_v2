@@ -1,8 +1,9 @@
+import * as fs from 'fs';
 import neo4j from "neo4j-driver";
 import { Neo4jGraphQL } from "@neo4j/graphql";
-import { ApolloServer, gql } from "apollo-server";
+import { ApolloServer } from "apollo-server";
 
-const typeDefs = gql``;
+const typeDefs = fs.readFileSync('./schema.graphql', 'utf8').toString();
 
 const driver = neo4j.driver(
   "neo4j://localhost:7687",

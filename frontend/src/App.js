@@ -1,7 +1,9 @@
+import SkillTree from "./components/SkillTree";
+
 function App() {
   return (
-    <div className="text-red-600">
-      Skill Taxonomy PoC V2
+    <div className="w-screen h-screen">
+      <SkillTree/>
     </div>
   );
 }
