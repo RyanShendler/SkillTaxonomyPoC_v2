@@ -1,3 +1,5 @@
+import { useQuery } from "@apollo/client";
+import { useEffect } from "react";
 import ReactFlow, {
   Background,
   Controls,
@@ -6,34 +8,37 @@ import ReactFlow, {
   useNodesState,
 } from "reactflow";
 import "reactflow/dist/style.css";
-
-const initialNodes = [
-  { id: "1", position: { x: 0, y: 0 }, data: { label: "Taxonomy" } },
-  { id: "2", position: { x: 50, y: 50 }, data: { label: "Developer" }, parentNode: "1" },
-  { id: "3", position: { x: -50, y: 50 }, data: { label: "Designer" }, parentNode: "1" },
-];
-
-const initialEdges = [
-  { id: "e1-2", source: "1", target: "2", markerStart: {type: 'arrow'} },
-  { id: "e1-3", source: "1", target: "3", markerStart: {type: 'arrow'} },
-];
+import { GetTaxonomy } from "../graphql/queries";
+import { getEdges, getNodes } from "../lib/lib";
 
 const SkillTree = () => {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const { data } = useQuery(GetTaxonomy);
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+
+  useEffect(() => {
+    if(!data) return
+    const nodeArray = data?.getTaxonomy
+    setNodes(getNodes(nodeArray))
+    setEdges(getEdges(nodeArray))
+  }, [data])
 
   return (
     <>
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-      >
-        <MiniMap />
-        <Controls />
-        <Background />
-      </ReactFlow>
+      {!data ? (
+        <div>Loading...</div>
+      ) : (
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+        >
+          <MiniMap />
+          <Controls />
+          <Background />
+        </ReactFlow>
+      )}
     </>
   );
 };
