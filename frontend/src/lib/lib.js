@@ -1,11 +1,11 @@
 export function getNodes(nodeArray) {
   return nodeArray.map((node) => {
-    const parent = !node.parent ? {} : { parentNode: node.parent };
+    //const parent = !node.parent ? {} : { parentNode: node.parent };
     return {
       id: node.id,
-      position: { x: 100, y: 100 },
+      position: { x: 0, y: 0 },
       data: { label: node.name },
-      ...parent,
+      //...parent,
     };
   });
 }
