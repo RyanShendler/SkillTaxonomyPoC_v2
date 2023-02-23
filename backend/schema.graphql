@@ -20,6 +20,7 @@ type Skill {
 type SkillLike @exclude {
     name: String!
     id: String!
+    type: String!
     parent: String
 }
 
@@ -29,7 +30,7 @@ type Query {
             statement: """
             MATCH (:Taxonomy)<-[:SUB_CLASS_OF*0..]-(k)
             OPTIONAL MATCH (k)-[:SUB_CLASS_OF]->(p)
-            RETURN {name: k.name, id: k.id, parent: p.id}
+            RETURN {name: k.name, id: k.id, parent: p.id, type: labels(k)[0]}
             """
         )
 }

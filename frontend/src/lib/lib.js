@@ -21,7 +21,8 @@ export function getNodes(nodeArray, width=172, height=36, xSeparation=25, ySepar
     return {
       id: data.id,
       data: {label: data.name},
-      position: {x, y}
+      position: {x, y},
+      type: data.type
     }
   })
 }

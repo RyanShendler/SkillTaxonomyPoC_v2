@@ -1,5 +1,5 @@
 import { useQuery } from "@apollo/client";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import ReactFlow, {
   Background,
   Controls,
@@ -10,8 +10,14 @@ import ReactFlow, {
 import "reactflow/dist/style.css";
 import { GetTaxonomy } from "../graphql/queries";
 import { getEdges, getNodes } from "../lib/lib";
+import SkillCategoryNode from "./nodes/SkillCategoryNode";
+import SkillNode from "./nodes/SkillNode";
+import TaxonomyNode from "./nodes/TaxonomyNode";
+
+
 
 const SkillTree = () => {
+  const nodeTypes = useMemo(() => ({Taxonomy: TaxonomyNode, SkillCategory: SkillCategoryNode, Skill: SkillNode}), [])
   const { data } = useQuery(GetTaxonomy);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -35,6 +41,7 @@ const SkillTree = () => {
           edges={edges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
+          nodeTypes={nodeTypes}
           fitView
         >
           <MiniMap />

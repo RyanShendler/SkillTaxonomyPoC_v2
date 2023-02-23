@@ -6,6 +6,7 @@ export const GetTaxonomy = gql`
       id
       name
       parent
+      type
     }
   }
 `;
