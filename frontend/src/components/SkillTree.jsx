@@ -10,43 +10,45 @@ import ReactFlow, {
 import "reactflow/dist/style.css";
 import { GetTaxonomy } from "../graphql/queries";
 import { getEdges, getNodes } from "../lib/lib";
-import dagre from "dagre";
+const ELK = require('elkjs')
 
-const dagreGraph = new dagre.graphlib.Graph();
-dagreGraph.setDefaultEdgeLabel(() => ({}));
+const elk = new ELK();
 
-const nodeWidth = 172;
-const nodeHeight = 36;
-
-const getLayoutedElements = (nodes, edges) => {
-  dagreGraph.setGraph({ rankdir: "TB" });
-
-  nodes.forEach((node) => {
-    dagreGraph.setNode(node.id, {
-      width: nodeWidth,
-      height: nodeHeight,
-    });
+const getLayoutedElements = async (nodes, edges) => {
+  const nodeList = nodes.map((node) => {
+    return {
+      id: node.id,
+      width: 172,
+      height: 36,
+    };
+  });
+  const edgeList = edges.map((edge) => {
+    return {
+      id: edge.id,
+      sources: [edge.source],
+      targets: [edge.target]
+    }
   });
 
-  edges.forEach((edge) => {
-    dagreGraph.setEdge(edge.source, edge.target);
-  });
-
-  dagre.layout(dagreGraph);
-
+  const graph = {
+    id: "root",
+    layoutOptions: {'elk.algorithm': 'layered', 'elk.direction': 'DOWN', 'elk.layered.spacing.nodeNodeBetweenLayers': 50, 'elk.layered.nodePlacement.strategy': 'SIMPLE'},
+    children: nodeList,
+    edges: edgeList
+  }
+  const {children: nodesWithPosition} = await elk.layout(graph)
   nodes.forEach((node) => {
-    const nodeWithPosition = dagreGraph.node(node.id);
-    node.targetPosition = "top";
-    node.sourcePosition = "bottom";
+    const nodeWithPosition = nodesWithPosition.find(n => n.id === node.id)
     node.position = {
       x: nodeWithPosition.x,
       y: nodeWithPosition.y
-    };
-    return node;
-  });
+    }
 
-  return { nodes, edges };
-};
+    return node
+  })
+
+  return ({nodes, edges})
+}
 
 const SkillTree = () => {
   const { data } = useQuery(GetTaxonomy);
@@ -58,10 +60,11 @@ const SkillTree = () => {
     const nodeArray = data?.getTaxonomy;
     const unformattedNodes = getNodes(nodeArray);
     const unformattedEdges = getEdges(nodeArray);
-    const { nodes: formattedNodes, edges: formattedEdges } =
-      getLayoutedElements(unformattedNodes, unformattedEdges);
-    setNodes(formattedNodes);
-    setEdges(formattedEdges);
+    getLayoutedElements(unformattedNodes, unformattedEdges).then(({nodes: formattedNodes, edges: formattedEdges}) => {
+      setNodes(formattedNodes);
+      setEdges(formattedEdges);
+    })
+    
   }, [data]);
 
   return (
