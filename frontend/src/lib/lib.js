@@ -20,7 +20,7 @@ export function getNodes(nodeArray, width=172, height=36, xSeparation=25, ySepar
   return nodeTree.descendants().map(({data, x, y}) => {
     return {
       id: data.id,
-      data: {label: data.name},
+      data,
       position: {x, y},
       type: data.type
     }

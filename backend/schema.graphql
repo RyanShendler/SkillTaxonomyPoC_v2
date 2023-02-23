@@ -1,9 +1,12 @@
 type Taxonomy {
+    name: String!
+    id: String!
     children: [SkillCategory!]! @relationship(type: "SUB_CLASS_OF", direction: IN)
 }
 
 type SkillCategory {
-    name: String
+    name: String!
+    id: String!
     childSkills: [Skill!]! @relationship(type: "SUB_CLASS_OF", direction: IN)
     childCategories: [SkillCategory!]!
       @relationship(type: "SUB_CLASS_OF", direction: IN)
@@ -12,7 +15,8 @@ type SkillCategory {
 }
 
 type Skill {
-    name: String
+    name: String!
+    id: String!
     inCategory: [SkillCategory!]!
       @relationship(type: "SUB_CLASS_OF", direction: OUT)
 }
@@ -33,4 +37,22 @@ type Query {
             RETURN {name: k.name, id: k.id, parent: p.id, type: labels(k)[0]}
             """
         )
+}
+
+type Mutation {
+    addChildCategory(parentID: String!, name: String!): SkillCategory @cypher(
+        statement: """
+        MATCH (n {id: $parentID})
+        CREATE (n)<-[:SUB_CLASS_OF]-(s:SkillCategory {name: $name, id: randomUUID()})
+        RETURN s
+        """
+    )
+
+    addChildSkill(parentID: String!, name: String!): Skill @cypher(
+        statement: """
+        MATCH (n {id: $parentID})
+        CREATE (n)<-[:SUB_CLASS_OF]-(s:Skill {name: $name, id: randomUUID()})
+        RETURN s
+        """
+    )
 }
