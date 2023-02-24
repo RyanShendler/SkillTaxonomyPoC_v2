@@ -55,4 +55,15 @@ type Mutation {
         RETURN s
         """
     )
+
+    deleteNode(nodeID: String!): Int @cypher(
+        statement: """
+        MATCH (n {id: $nodeID})
+        OPTIONAL MATCH (n)<-[:SUB_CLASS_OF*1..]-(k:SkillCategory)
+        DETACH DELETE k
+        WITH n, count(k) as deleted
+        DETACH DELETE n
+        RETURN deleted + 1
+        """
+    )
 }

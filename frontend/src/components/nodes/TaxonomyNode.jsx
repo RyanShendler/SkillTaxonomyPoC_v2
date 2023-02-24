@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Handle } from "reactflow";
+import AddChildModal from "../AddChildModal";
 import Modal from "../common/Modal";
 
-const TaxonomyNode = () => {
+const TaxonomyNode = ({ data: { id } }) => {
   const [open, setOpen] = useState(false);
 
   return (
@@ -21,7 +22,7 @@ const TaxonomyNode = () => {
         open={open}
         setOpen={setOpen}
         title="Add Child to Taxonomy"
-        content={<span>Taxonomy Modal</span>}
+        content={<AddChildModal closeModal={() => setOpen(false)} id={id} />}
       />
     </>
   );

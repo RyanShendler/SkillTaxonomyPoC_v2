@@ -21,3 +21,9 @@ export const AddChildSkill = gql`
     }
   }
 `;
+
+export const DeleteNode = gql`
+  mutation DeleteNode($nodeId: String!) {
+    deleteNode(nodeID: $nodeId)
+  }
+`;

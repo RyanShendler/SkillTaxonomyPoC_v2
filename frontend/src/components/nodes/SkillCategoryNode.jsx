@@ -3,10 +3,13 @@ import { useState } from "react";
 import { Handle } from "reactflow";
 import { AddChildSkill } from "../../graphql/mutations";
 import { GetTaxonomy } from "../../graphql/queries";
+import AddChildModal from "../AddChildModal";
 import Modal from "../common/Modal";
+import DeleteNodeModal from "../DeleteNodeModal";
 
 const SkillCategoryNode = ({ data: { name, id } }) => {
-  const [open, setOpen] = useState(false);
+  const [addModal, setAddModal] = useState(false);
+  const [deleteModal, setDeleteModal] = useState(false);
 
   return (
     <>
@@ -16,19 +19,30 @@ const SkillCategoryNode = ({ data: { name, id } }) => {
         <div className="flex space-x-2">
           <button
             className="text-xs bg-white border-black border rounded-md p-1 hover:bg-gray-100"
-            onClick={() => setOpen(true)}
+            onClick={() => setAddModal(true)}
           >
             Add Child
           </button>
-          <button className="text-xs bg-white border-black border rounded-md p-1 hover:bg-gray-100">Delete Node</button>
+          <button
+            className="text-xs bg-white border-black border rounded-md p-1 hover:bg-gray-100"
+            onClick={() => setDeleteModal(true)}
+          >
+            Delete Node
+          </button>
         </div>
       </div>
       <Handle type="source" position="bottom" />
       <Modal
-        open={open}
-        setOpen={setOpen}
+        open={addModal}
+        setOpen={setAddModal}
         title="Add Child to Skill Category"
-        content={<span>Skill Category Modal</span>}
+        content={<AddChildModal id={id} closeModal={() => setAddModal(false)}/>}
+      />
+      <Modal
+        open={deleteModal}
+        setOpen={setDeleteModal}
+        title="Are You Sure You Want to Delete this Node?"
+        content={<DeleteNodeModal id={id} closeModal={() => setDeleteModal(false)}/>}
       />
     </>
   );
