@@ -32,7 +32,7 @@ const SkillTree = () => {
   }, [data]);
 
   return (
-    <>
+    <div className="w-full h-full">
       {!data ? (
         <div>Loading...</div>
       ) : (
@@ -49,7 +49,7 @@ const SkillTree = () => {
           <Background />
         </ReactFlow>
       )}
-    </>
+    </div>
   );
 };
 

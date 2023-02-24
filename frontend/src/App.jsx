@@ -1,8 +1,10 @@
 import SkillTree from "./components/SkillTree";
+import UnattachedSkills from "./components/UnattachedSkills";
 
 function App() {
   return (
-    <div className="w-screen h-screen">
+    <div className="fixed w-screen h-screen">
+      <UnattachedSkills/>
       <SkillTree/>
     </div>
   );
