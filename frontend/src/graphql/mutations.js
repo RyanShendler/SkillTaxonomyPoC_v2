@@ -27,3 +27,18 @@ export const DeleteNode = gql`
     deleteNode(nodeID: $nodeId)
   }
 `;
+
+export const AttachExistingSkill = gql`
+  mutation AttachExistingSkill($parentId: String!, $skillId: String!) {
+    attachExistingSkill(parentID: $parentId, skillID: $skillId) {
+      name
+      id
+    }
+  }
+`;
+/*
+{
+  parentId: null,
+  skillId: null
+}
+*/

@@ -37,6 +37,15 @@ type Query {
             RETURN {name: k.name, id: k.id, parent: p.id, type: labels(k)[0]}
             """
         )
+    
+    getUnattachedSkills: [Skill!]!
+        @cypher(
+            statement: """
+            MATCH (n:Skill)
+            WHERE NOT EXISTS((n)-[:SUB_CLASS_OF]->())
+            RETURN n
+            """
+        )
 }
 
 type Mutation {
@@ -64,6 +73,15 @@ type Mutation {
         WITH n, count(k) as deleted
         DETACH DELETE n
         RETURN deleted + 1
+        """
+    )
+
+    attachExistingSkill(parentID: String!, skillID: String!): Skill @cypher(
+        statement: """
+        MATCH (p {id: $parentID})
+        MATCH (s:Skill {id: $skillID})
+        CREATE (p)<-[:SUB_CLASS_OF]-(s)
+        RETURN s
         """
     )
 }

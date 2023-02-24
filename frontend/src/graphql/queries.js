@@ -10,3 +10,12 @@ export const GetTaxonomy = gql`
     }
   }
 `;
+
+export const GetUnattachedSkills = gql`
+  query GetUnattachedSkills {
+    getUnattachedSkills {
+      name
+      id
+    }
+  }
+`;
