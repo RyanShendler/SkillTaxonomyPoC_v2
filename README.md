@@ -1,2 +1,5 @@
 # SkillTaxonomyPoC_v2
-This is our second attempt at creating a PoC for the Connect skill taxonomy. The priority of this PoC is to create a graph-based UI that allows users to interact with the taxonomy in a more logical manner.
+This PoC demonstrates the functionality of implementing a hierarchical taxonomy for the skills in Connect.
+
+## Local Setup
+First, follow the instructions in the `/backend` folder to launch the backend. Once the backend is running, follow the instructions in `/frontend` to run the frontend.
