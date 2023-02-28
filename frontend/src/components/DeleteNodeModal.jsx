@@ -1,10 +1,17 @@
 import { useMutation } from "@apollo/client";
 import { DeleteNode } from "../graphql/mutations";
-import { GetTaxonomy, GetUnattachedSkills } from "../graphql/queries";
+import {
+  GetTaxonomy,
+  GetUnattachedSkills,
+} from "../graphql/queries";
 
 const DeleteNodeModal = ({ id, closeModal }) => {
   const [deleteNode] = useMutation(DeleteNode, {
-    refetchQueries: [{ query: GetTaxonomy }, {query: GetUnattachedSkills}],
+    refetchQueries: [
+      { query: GetTaxonomy },
+      { query: GetUnattachedSkills },
+      "GetRelatedSkills"
+    ]
   });
 
   const handleDeleteNode = () => {

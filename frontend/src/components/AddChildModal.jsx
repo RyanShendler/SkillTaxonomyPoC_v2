@@ -5,17 +5,24 @@ import {
   AddChildSkill,
   AttachExistingSkill,
 } from "../graphql/mutations";
-import { GetTaxonomy, GetUnattachedSkills } from "../graphql/queries";
+import {
+  GetTaxonomy,
+  GetUnattachedSkills,
+} from "../graphql/queries";
 
 const AddChildModal = ({ id, closeModal }) => {
   const [addChildCategory] = useMutation(AddChildCategory, {
     refetchQueries: [{ query: GetTaxonomy }],
   });
   const [addChildSkill] = useMutation(AddChildSkill, {
-    refetchQueries: [{ query: GetTaxonomy }],
+    refetchQueries: [{ query: GetTaxonomy }, "GetRelatedSkills"],
   });
   const [attachExistingSkill] = useMutation(AttachExistingSkill, {
-    refetchQueries: [{ query: GetTaxonomy }, { query: GetUnattachedSkills }],
+    refetchQueries: [
+      { query: GetTaxonomy },
+      { query: GetUnattachedSkills },
+      "GetRelatedSkills"
+    ],
   });
   const { data } = useQuery(GetUnattachedSkills);
   const [type, setType] = useState("");
@@ -45,10 +52,12 @@ const AddChildModal = ({ id, closeModal }) => {
 
   const handleAttachSkill = () => {
     if (validateAttach()) {
-      attachExistingSkill({variables: {
-        parentId: id,
-        skillId: skill
-      }})
+      attachExistingSkill({
+        variables: {
+          parentId: id,
+          skillId: skill,
+        },
+      });
       closeModal();
     }
   };

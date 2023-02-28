@@ -46,6 +46,11 @@ type Query {
             RETURN n
             """
         )
+    getRelatedSkills(skillID: String!): [Skill!]!
+        @cypher(statement: """
+        MATCH (:Skill {id: $skillID})-[:SUB_CLASS_OF]->(:SkillCategory)<-[:SUB_CLASS_OF*1..]-(s:Skill)
+        RETURN s
+        """)
 }
 
 type Mutation {
