@@ -5,7 +5,7 @@ export const GetTaxonomy = gql`
     getTaxonomy {
       id
       name
-      parent
+      parents
       type
     }
   }
