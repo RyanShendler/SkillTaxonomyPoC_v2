@@ -24,9 +24,9 @@ type Skill {
 type SkillLike @exclude {
     name: String!
     id: String!
-    type: String!
-    depth: Int!
-    parents: [String!]!
+    type: String
+    depth: Int
+    parents: [String]
 }
 
 type Query {
@@ -49,6 +49,16 @@ type Query {
             RETURN n
             """
         )
+
+    getUnconnectedNodes(parentID: String!): [SkillLike!]!
+        @cypher(
+            statement: """
+            MATCH (n)
+            WHERE NOT EXISTS((n)-[:SUB_CLASS_OF]->({id: $parentID}))
+            RETURN {name: n.name, id: n.id}
+            """
+        )
+    
     getRelatedSkills(skillID: String!): [Skill!]!
         @cypher(statement: """
         MATCH (:Skill {id: $skillID})-[:SUB_CLASS_OF]->(:SkillCategory)<-[:SUB_CLASS_OF*1..]-(s:Skill)
@@ -84,12 +94,12 @@ type Mutation {
         """
     )
 
-    attachExistingSkill(parentID: String!, skillID: String!): Skill @cypher(
+    attachExistingNode(parentID: String!, nodeID: String!): String @cypher(
         statement: """
         MATCH (p {id: $parentID})
-        MATCH (s:Skill {id: $skillID})
+        MATCH (s {id: $nodeID})
         CREATE (p)<-[:SUB_CLASS_OF]-(s)
-        RETURN s
+        RETURN s.id
         """
     )
 }
