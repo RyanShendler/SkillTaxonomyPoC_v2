@@ -25,6 +25,7 @@ type SkillLike @exclude {
     name: String!
     id: String!
     type: String!
+    depth: Int!
     parents: [String!]!
 }
 
@@ -32,11 +33,11 @@ type Query {
     getTaxonomy: [SkillLike!]! 
         @cypher(
             statement: """
-            MATCH (:Taxonomy)<-[:SUB_CLASS_OF*0..]-(k)
-            WITH DISTINCT k
+            MATCH p = (:Taxonomy)<-[:SUB_CLASS_OF*0..]-(k)
+            WITH DISTINCT k, max(length(p)) as depth
             OPTIONAL MATCH (k)-[:SUB_CLASS_OF]->(p)
-            WITH k, collect(DISTINCT p.id) as parents
-            RETURN {name: k.name, id: k.id, parents: parents, type: labels(k)[0]}
+            WITH k, depth, collect(DISTINCT p.id) as parents
+            RETURN {name: k.name, id: k.id, parents: parents, type: labels(k)[0], depth: depth}
             """
         )
     

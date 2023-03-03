@@ -18,12 +18,32 @@ export function getNodes(nodeArray, width=172, height=36, xSeparation=25, ySepar
 }
 */
 
-export function getNodes(nodeArray) {
-  return nodeArray.map((node) => {
+export function getNodes(
+  nodeArray,
+  width = 172,
+  height = 36,
+  xSeparation = 25,
+  ySeparation = 75
+) {
+  const root = stratify().parentId((d) =>
+    d.parents.reduce((acc, val) => {
+      if (!acc) return val;
+      const curParent = nodeArray.find((n) => n.id === acc);
+      const nextParent = nodeArray.find((n) => n.id === val);
+      return curParent.depth < nextParent.depth ? nextParent.id : curParent.id;
+    }, null)
+  )(nodeArray);
+  const nodeTree = tree()
+    .nodeSize([width + xSeparation, height + ySeparation])
+    .separation((a, b) => {
+      return a.parent == b.parent ? 1 : 1.25;
+    })(root);
+  return nodeTree.descendants().map(({ data, x, y }) => {
     return {
-      id: node.id,
-      data: { label: node.name },
-      position: { x: 0, y: 0 },
+      id: data.id,
+      data,
+      position: { x, y },
+      type: data.type,
     };
   });
 }
