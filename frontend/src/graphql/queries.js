@@ -21,9 +21,9 @@ export const GetUnattachedSkills = gql`
   }
 `;
 
-export const GetUnconnectedSkills = gql`
-  query GetUnconnectedSkills($parentId: String!) {
-    getUnconnectedSkills(parentID: $parentId) {
+export const GetUnconnectedNodes = gql`
+  query GetUnconnectedNodes($parentId: String!) {
+    getUnconnectedNodes(parentID: $parentId) {
       id
       name
     }

@@ -10,7 +10,8 @@ const DeleteNodeModal = ({ id, closeModal }) => {
     refetchQueries: [
       { query: GetTaxonomy },
       { query: GetUnattachedSkills },
-      "GetRelatedSkills"
+      "GetRelatedSkills",
+      "GetUnconnectedNodes"
     ]
   });
 

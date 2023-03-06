@@ -54,6 +54,8 @@ type Query {
         @cypher(
             statement: """
             MATCH (n)
+            WHERE n:Skill OR n:SkillCategory AND n.id <> $parentID
+            WITH n
             WHERE NOT EXISTS((n)-[:SUB_CLASS_OF]->({id: $parentID}))
             RETURN {name: n.name, id: n.id}
             """

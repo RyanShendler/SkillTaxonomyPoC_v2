@@ -3,35 +3,38 @@ import { useState } from "react";
 import {
   AddChildCategory,
   AddChildSkill,
-  AttachExistingSkill,
+  AttachExistingNode,
 } from "../graphql/mutations";
 import {
   GetTaxonomy,
-  GetUnattachedSkills,
+  GetUnconnectedNodes,
 } from "../graphql/queries";
 
 const AddChildModal = ({ id, closeModal }) => {
   const [addChildCategory] = useMutation(AddChildCategory, {
-    refetchQueries: [{ query: GetTaxonomy }],
+    refetchQueries: [{ query: GetTaxonomy }, "GetUnconnectedNodes"],
   });
   const [addChildSkill] = useMutation(AddChildSkill, {
-    refetchQueries: [{ query: GetTaxonomy }, "GetRelatedSkills"],
+    refetchQueries: [{ query: GetTaxonomy }, "GetRelatedSkills", "GetUnconnectedNodes"],
   });
-  const [attachExistingSkill] = useMutation(AttachExistingSkill, {
+  const [attachExistingNode] = useMutation(AttachExistingNode, {
     refetchQueries: [
-      { query: GetTaxonomy },
-      { query: GetUnattachedSkills },
-      "GetRelatedSkills"
+      "GetTaxonomy",
+      "GetUnattachedSkills",
+      "GetUnconnectedNodes",
+      "GetRelatedSkills",
     ],
   });
-  const { data } = useQuery(GetUnattachedSkills);
+  const { data } = useQuery(GetUnconnectedNodes, {
+    variables: { parentId: id },
+  });
   const [type, setType] = useState("");
   const [name, setName] = useState("");
-  const [skill, setSkill] = useState("");
+  const [node, setNode] = useState("");
   const [error, setError] = useState({ create: false, attach: false });
 
   const validateAttach = () => {
-    if (!skill) {
+    if (!node) {
       setError({ ...error, attach: true });
       return false;
     }
@@ -50,12 +53,12 @@ const AddChildModal = ({ id, closeModal }) => {
     return true;
   };
 
-  const handleAttachSkill = () => {
+  const handleAttachNode = () => {
     if (validateAttach()) {
-      attachExistingSkill({
+      attachExistingNode({
         variables: {
           parentId: id,
-          skillId: skill,
+          nodeId: node,
         },
       });
       closeModal();
@@ -132,21 +135,22 @@ const AddChildModal = ({ id, closeModal }) => {
           </div>
           <span className="self-center text-lg font-bold">OR</span>
           <div className="flex flex-col w-full h-full p-2 space-y-4">
-            <h3>Attach Existing Skill</h3>
+            <h3>Attach Existing Node</h3>
             <label>
-              Skills <span className="text-red-500">*</span>
+              Nodes <span className="text-red-500">*</span>
               <select
                 className="ml-4 border border-black rounded-md p-1"
+                value={node}
                 onChange={(e) => {
                   setError({ ...error, attach: false });
-                  setSkill(e.target.value);
+                  setNode(e.target.value);
                 }}
               >
                 <option value={""} />
-                {data?.getUnattachedSkills?.map((skill) => {
+                {data?.getUnconnectedNodes?.map((node) => {
                   return (
-                    <option key={skill?.id} value={skill?.id}>
-                      {skill?.name}
+                    <option key={node.id} value={node.id}>
+                      {node.name}
                     </option>
                   );
                 })}
@@ -159,7 +163,7 @@ const AddChildModal = ({ id, closeModal }) => {
             </span>
             <button
               className="bg-green-500 text-white font-bold rounded-md p-2"
-              onClick={() => handleAttachSkill()}
+              onClick={() => handleAttachNode()}
             >
               Attach
             </button>
