@@ -68,9 +68,7 @@ type Query {
     
     getRelatedSkills(skillID: String!): [RelatedSkill!]!
         @cypher(statement: """
-        MATCH (:Skill {id: $skillID})-[:SUB_CLASS_OF]->(p:SkillCategory)
-        MATCH (p)<-[:SUB_CLASS_OF*1..]-(k:Skill)
-        WHERE k.id <> $skillID
+        MATCH (:Skill {id: $skillID})-[:SUB_CLASS_OF]->(p:SkillCategory)<-[:SUB_CLASS_OF*1..]-(k:Skill)
         WITH p, collect(k.name) as related
         RETURN {parent: p.name, related: related}
         """)
