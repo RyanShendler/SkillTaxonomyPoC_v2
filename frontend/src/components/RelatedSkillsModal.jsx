@@ -19,13 +19,16 @@ const RelatedSkillsModal = ({ id }) => {
               No Related Skills
             </div>
           ) : (
-            data?.getRelatedSkills.map((skill) => {
+            data?.getRelatedSkills.map((skills, index) => {
               return (
                 <div
-                  key={skill?.id}
-                  className="text-xl border-b border-gray-200 w-full text-center p-2 -mb-[1px]"
+                  key={index}
+                  className="text-2xl font-bold border-b border-gray-200 w-full text-center p-2 -mb-[1px]"
                 >
-                  {skill?.name}
+                  {skills.parent}
+                  {skills.related.map((relSkill, index) => {
+                    return <div className="text-xl font-normal" key={index}>{relSkill}</div>;
+                  })}
                 </div>
               );
             })

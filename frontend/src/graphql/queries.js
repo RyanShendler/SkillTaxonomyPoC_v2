@@ -33,8 +33,8 @@ export const GetUnconnectedNodes = gql`
 export const GetRelatedSkills = gql`
   query GetRelatedSkills($skillId: String!) {
     getRelatedSkills(skillID: $skillId) {
-      id
-      name
+      parent
+      related
     }
   }
 `;

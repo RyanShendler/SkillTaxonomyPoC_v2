@@ -29,6 +29,11 @@ type SkillLike @exclude {
     parents: [String]
 }
 
+type RelatedSkill @exclude {
+    parent: String!
+    related: [String!]!
+}
+
 type Query {
     getTaxonomy: [SkillLike!]! 
         @cypher(
@@ -61,10 +66,13 @@ type Query {
             """
         )
     
-    getRelatedSkills(skillID: String!): [Skill!]!
+    getRelatedSkills(skillID: String!): [RelatedSkill!]!
         @cypher(statement: """
-        MATCH (:Skill {id: $skillID})-[:SUB_CLASS_OF]->(:SkillCategory)<-[:SUB_CLASS_OF*1..]-(s:Skill)
-        RETURN s
+        MATCH (:Skill {id: $skillID})-[:SUB_CLASS_OF]->(p:SkillCategory)
+        MATCH (p)<-[:SUB_CLASS_OF*1..]-(k:Skill)
+        WHERE k.id <> $skillID
+        WITH p, collect(k.name) as related
+        RETURN {parent: p.name, related: related}
         """)
 }
 
