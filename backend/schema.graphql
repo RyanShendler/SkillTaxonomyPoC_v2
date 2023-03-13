@@ -1,6 +1,12 @@
+type Organization {
+    name: String!
+    taxonomy: Taxonomy @relationship(type: "ORG_TAXONOMY", direction: OUT)
+}
+
 type Taxonomy {
     name: String!
     id: String!
+    org: Organization @relationship(type: "ORG_TAXONOMY", direction: IN)
     children: [SkillCategory!]! @relationship(type: "SUB_CLASS_OF", direction: IN)
 }
 
@@ -17,6 +23,7 @@ type SkillCategory {
 type Skill {
     name: String!
     id: String!
+    icon: String
     inCategory: [SkillCategory!]!
       @relationship(type: "SUB_CLASS_OF", direction: OUT)
 }
@@ -32,6 +39,40 @@ type SkillLike @exclude {
 type RelatedSkill @exclude {
     parent: String!
     related: [String!]!
+}
+
+type SkillJSON @exclude {
+    name: String!
+    icon: String
+}
+
+type CategoryJSON @exclude {
+    name: String!
+}
+
+type EdgeJSON @exclude {
+    start: String!
+    end: String!
+}
+
+type TaxonomyJSON @exclude {
+    skills: [SkillJSON!]!
+    categories: [CategoryJSON!]!
+    edges: [EdgeJSON!]!
+}
+
+input ImportedSkill {
+    name: String!
+    icon: String
+}
+
+input ImportedCategory {
+    name: String!
+}
+
+input ImportedEdge {
+    start: String!
+    end: String!
 }
 
 type Query {
@@ -72,6 +113,17 @@ type Query {
         WITH p, collect(k.name) as related
         RETURN {parent: p.name, related: related}
         """)
+
+    exportTaxonomy: TaxonomyJSON!
+        @cypher( statement: """
+        MATCH (t:Taxonomy)<-[:SUB_CLASS_OF*1..]-(s:Skill) 
+        OPTIONAL MATCH (s)-[:SUB_CLASS_OF]->(p) 
+        WITH t, collect(DISTINCT {name: s.name, icon: s.icon}) as skills, collect(DISTINCT {start: s.name, end: p.name}) as skillEdges 
+        MATCH (t)<-[:SUB_CLASS_OF*1..]-(c:SkillCategory) 
+        OPTIONAL MATCH (c)-[:SUB_CLASS_OF]->(p) 
+        WITH skills, skillEdges, collect(DISTINCT {name: c.name}) as categories, collect(DISTINCT {start: c.name, end: p.name}) as categoryEdges 
+        RETURN {skills: skills, categories: categories, edges: skillEdges + categoryEdges}
+        """)
 }
 
 type Mutation {
@@ -110,4 +162,39 @@ type Mutation {
         RETURN s.id
         """
     )
+
+    importTaxonomy(orgName: String!, skills: [ImportedSkill!]!, categories: [ImportedCategory!]!, edges: [ImportedEdge!]!): Taxonomy
+        @cypher(
+            statement: """
+            MATCH (t:Taxonomy)<-[:ORG_TAXONOMY]-(:Organization {name: $orgName})
+            UNWIND $skills as skill
+            CALL apoc.do.when(exists((:Skill {name: skill.name})-[:SUB_CLASS_OF*1..]->(t)), 
+            'MATCH (s:Skill {name: skill.name})-[:SUB_CLASS_OF*1..]->(t)
+            SET s.icon = skill.icon
+            RETURN s', 
+            'CREATE (s:Skill {name: skill.name, id: randomUUID(), icon: skill.icon})-[:TEMP_SUB_CLASS]->(t)
+            RETURN s', 
+            {skill: skill, t: t})
+            YIELD value
+            WITH t, count(*) as dummy
+            UNWIND $categories as category
+            CALL apoc.do.when(exists((:SkillCategory {name: category.name})-[:SUB_CLASS_OF*1..]->(t)), 
+            'MATCH (s:SkillCategory {name: category.name})-[:SUB_CLASS_OF*1..]->(t)
+            RETURN s',
+            'CREATE (s:SkillCategory {name: category.name, id: randomUUID()})-[:TEMP_SUB_CLASS]->(t)
+            RETURN s',
+            {category: category, t: t})
+            YIELD value
+            WITH t, count(*) as dummy
+            UNWIND $edges as edge
+            MATCH (c {name: edge.start})-[:SUB_CLASS_OF|TEMP_SUB_CLASS*1..]->(t)
+            MATCH (p {name: edge.end})-[:SUB_CLASS_OF|TEMP_SUB_CLASS*0..]->(t)
+            MERGE (c)-[:SUB_CLASS_OF]->(p)
+            WITH t, count(*) as dummy
+            MATCH ()-[r:TEMP_SUB_CLASS]->(t)
+            DELETE r
+            WITH t, count(*) as dummy
+            RETURN t
+            """
+        )
 }
