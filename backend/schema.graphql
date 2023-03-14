@@ -114,9 +114,10 @@ type Query {
         RETURN {parent: p.name, related: related}
         """)
 
-    exportTaxonomy: TaxonomyJSON!
+    exportTaxonomy(orgName: String!): TaxonomyJSON!
         @cypher( statement: """
-        MATCH (t:Taxonomy)<-[:SUB_CLASS_OF*1..]-(s:Skill) 
+        MATCH (t:Taxonomy)<-[:ORG_TAXONOMY]-(:Organization {name: $orgName})
+        MATCH (t)<-[:SUB_CLASS_OF*1..]-(s:Skill) 
         OPTIONAL MATCH (s)-[:SUB_CLASS_OF]->(p) 
         WITH t, collect(DISTINCT {name: s.name, icon: s.icon}) as skills, collect(DISTINCT {start: s.name, end: p.name}) as skillEdges 
         MATCH (t)<-[:SUB_CLASS_OF*1..]-(c:SkillCategory) 
@@ -164,6 +165,38 @@ type Mutation {
     )
 
     importTaxonomy(orgName: String!, skills: [ImportedSkill!]!, categories: [ImportedCategory!]!, edges: [ImportedEdge!]!): Taxonomy
+        @cypher(
+            statement: """
+            MATCH (t:Taxonomy)<-[:ORG_TAXONOMY]-(:Organization {name: $orgName})
+            OPTIONAL MATCH (k:SkillCategory)-[:SUB_CLASS_OF*1..]->(t)
+            DETACH DELETE k
+            WITH t, count(*) as dummy
+            OPTIONAL MATCH (s:Skill)-[r:SUB_CLASS_OF]->(t)
+            DELETE r
+            WITH t, count(*) as dummy
+            UNWIND $skills as skill
+            MERGE (s:Skill {name: skill.name})
+            ON CREATE SET s.id = randomUUID(), s.icon = skill.icon
+            ON MATCH SET s.icon = skill.icon
+            CREATE (s)-[:TEMP_SUB_CLASS]->(t)
+            WITH t, count(*) as dummy
+            UNWIND $categories as category
+            CREATE (s:SkillCategory {name: category.name, id: randomUUID()})-[:TEMP_SUB_CLASS]->(t)
+            WITH t, count(*) as dummy
+            UNWIND $edges as edge
+            MATCH (s {name: edge.start})-[:TEMP_SUB_CLASS]->(t)
+            MATCH (e {name: edge.end})-[:TEMP_SUB_CLASS*0..1]->(t)
+            WHERE s:Skill OR s:SkillCategory AND e:SkillCategory OR e:Taxonomy
+            CREATE (s)-[:SUB_CLASS_OF]->(e)
+            WITH t, count(*) as dummy
+            MATCH ()-[r:TEMP_SUB_CLASS]->(t)
+            DELETE r
+            WITH t, count(*) as dummy
+            RETURN t
+            """
+        )
+
+    importSkillPack(orgName: String!, skills: [ImportedSkill!]!, categories: [ImportedCategory!]!, edges: [ImportedEdge!]!): Taxonomy
         @cypher(
             statement: """
             MATCH (t:Taxonomy)<-[:ORG_TAXONOMY]-(:Organization {name: $orgName})
