@@ -117,12 +117,16 @@ type Query {
     exportTaxonomy(orgName: String!): TaxonomyJSON!
         @cypher( statement: """
         MATCH (t:Taxonomy)<-[:ORG_TAXONOMY]-(:Organization {name: $orgName})
-        MATCH (t)<-[:SUB_CLASS_OF*1..]-(s:Skill) 
+        OPTIONAL MATCH (t)<-[:SUB_CLASS_OF*1..]-(s:Skill) 
         OPTIONAL MATCH (s)-[:SUB_CLASS_OF]->(p) 
-        WITH t, collect(DISTINCT {name: s.name, icon: s.icon}) as skills, collect(DISTINCT {start: s.name, end: p.name}) as skillEdges 
-        MATCH (t)<-[:SUB_CLASS_OF*1..]-(c:SkillCategory) 
+        WITH t, 
+        collect(DISTINCT CASE WHEN s IS NULL THEN NULL ELSE {name: s.name, icon: s.icon} END) as skills, 
+        collect(DISTINCT CASE WHEN s IS NULL THEN NULL ELSE {start: s.name, end: p.name} END) as skillEdges 
+        OPTIONAL MATCH (t)<-[:SUB_CLASS_OF*1..]-(c:SkillCategory) 
         OPTIONAL MATCH (c)-[:SUB_CLASS_OF]->(p) 
-        WITH skills, skillEdges, collect(DISTINCT {name: c.name}) as categories, collect(DISTINCT {start: c.name, end: p.name}) as categoryEdges 
+        WITH skills, skillEdges, 
+        collect(DISTINCT CASE WHEN c IS NULL THEN NULL ELSE {name: c.name} END) as categories, 
+        collect(DISTINCT CASE WHEN c IS NULL THEN NULL ELSE {start: c.name, end: p.name} END) as categoryEdges 
         RETURN {skills: skills, categories: categories, edges: skillEdges + categoryEdges}
         """)
 }
