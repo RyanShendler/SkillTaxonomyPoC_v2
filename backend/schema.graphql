@@ -129,6 +129,16 @@ type Query {
         collect(DISTINCT CASE WHEN c IS NULL THEN NULL ELSE {start: c.name, end: p.name} END) as categoryEdges 
         RETURN {skills: skills, categories: categories, edges: skillEdges + categoryEdges}
         """)
+    
+    getCreatedSkills(orgName: String!, skills: [ImportedSkill!]!): [String!]!
+        @cypher(
+            statement: """
+            UNWIND CASE WHEN $skills = [] THEN [NULL] ELSE $skills END as skill
+            OPTIONAL MATCH (s:Skill {name: skill.name})
+            WITH collect(CASE WHEN s IS NULL THEN skill.name ELSE NULL END) as created
+            RETURN created
+            """
+        )
 }
 
 type Mutation {
@@ -178,22 +188,42 @@ type Mutation {
             OPTIONAL MATCH (s:Skill)-[r:SUB_CLASS_OF]->(t)
             DELETE r
             WITH t, count(*) as dummy
-            UNWIND $skills as skill
+            CALL apoc.do.when(
+            $skills = [],
+            'RETURN t',
+            'UNWIND skills as skill
             MERGE (s:Skill {name: skill.name})
-            ON CREATE SET s.id = randomUUID(), s.icon = skill.icon
-            ON MATCH SET s.icon = skill.icon
+            ON CREATE SET s.id = randomUUID()
             CREATE (s)-[:TEMP_SUB_CLASS]->(t)
             WITH t, count(*) as dummy
-            UNWIND $categories as category
+            RETURN t',
+            {t: t, skills: $skills})
+            YIELD value      
+            WITH t, count(*) as dummy
+            CALL apoc.do.when(
+            $categories = [],
+            'RETURN t',
+            'UNWIND categories as category
             CREATE (s:SkillCategory {name: category.name, id: randomUUID()})-[:TEMP_SUB_CLASS]->(t)
             WITH t, count(*) as dummy
-            UNWIND $edges as edge
+            RETURN t',
+            {t: t, categories: $categories})
+            YIELD value
+            WITH t, count(*) as dummy
+            CALL apoc.do.when(
+            $edges = [],
+            'RETURN t',
+            'UNWIND edges as edge
             MATCH (s {name: edge.start})-[:TEMP_SUB_CLASS]->(t)
             MATCH (e {name: edge.end})-[:TEMP_SUB_CLASS*0..1]->(t)
             WHERE s:Skill OR s:SkillCategory AND e:SkillCategory OR e:Taxonomy
             CREATE (s)-[:SUB_CLASS_OF]->(e)
             WITH t, count(*) as dummy
-            MATCH ()-[r:TEMP_SUB_CLASS]->(t)
+            RETURN t',
+            {t: t, edges: $edges})
+            YIELD value
+            WITH t, count(*) as dummy
+            OPTIONAL MATCH ()-[r:TEMP_SUB_CLASS]->(t)
             DELETE r
             WITH t, count(*) as dummy
             RETURN t
