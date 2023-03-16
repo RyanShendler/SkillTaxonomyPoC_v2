@@ -139,6 +139,18 @@ type Query {
             RETURN created
             """
         )
+
+    getTaxonomySubtree(rootID: String!): [SkillLike!]!
+    @cypher(
+        statement: """
+        MATCH p = (s:SkillCategory {id: $rootID})<-[:SUB_CLASS_OF*0..]-(k)
+        WITH DISTINCT k, s, max(length(p)) as depth
+        OPTIONAL MATCH (k)-[:SUB_CLASS_OF]->(p)
+        WHERE exists((p)-[:SUB_CLASS_OF*0..]->(s))
+        WITH k, depth, collect(DISTINCT p.id) as parents
+        RETURN {name: k.name, id: k.id, parents: parents, type: labels(k)[0], depth: depth, icon: CASE WHEN k:Skill THEN k.imageLink ELSE null END}
+        """
+    )
 }
 
 type Mutation {
